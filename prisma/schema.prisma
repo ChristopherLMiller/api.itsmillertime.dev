@@ -13,10 +13,10 @@ generator client {
 }
 
 // Generator for the controllers
-//generator nestjsDto {
-//  provider = "prisma-generator-nestjs-dto"
-//  output   = "../src/prisma/dto.ts"
-//}
+generator nestjsDto {
+  provider = "prisma-generator-nestjs-dto"
+  output   = "../src/prisma/dto.ts"
+}
 
 // Generates the Graphql counterparts
 //generator nestgraphql {

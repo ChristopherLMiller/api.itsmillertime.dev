@@ -1,16 +1,16 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PinoLogger } from 'nestjs-pino';
-import { Observable } from 'rxjs';
+import { catchError, firstValueFrom, Observable } from 'rxjs';
+import { handleAxiosError } from 'src/handleAxiosError';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
+import { StartTimerDto } from './dto';
 
 @Injectable()
 export class ClockifyService {
   constructor(
     private prisma: PrismaService,
     private http: HttpService,
-    private readonly logger: PinoLogger,
     private webhooks: WebhooksService,
   ) {}
 
@@ -31,20 +31,35 @@ export class ClockifyService {
     return this.http.get('workspaces');
   }
 
+  // Get list of projects
+  getProjects(archived = false, pageSize = 25): Observable<any> {
+    return this.http.get(
+      `/workspaces/${process.env.CLOCKIFY_WORKSPACE_ID}/projects`,
+      {
+        params: {
+          archived,
+          'page-size': pageSize,
+        },
+      },
+    );
+  }
+
   // Function to run when timers are started
-  startTimer(projectId: string): Observable<any> {
-    if (projectId === null) {
+  async startTimer(projectId: StartTimerDto): Promise<any> {
+    if (!projectId) {
       throw new BadRequestException('Must provide projectId');
     }
 
     // kick off the webhook for the timer start
-    this.webhooks.sendDiscordMessage(`Clockify Project Started - ${projectId}`);
-    return this.http.post(
-      `/workspaces/${process.env.CLOCKIFY_WORKSPACE_ID}/time-entries`,
-      {
+    //this.webhooks.sendDiscordMessage(`Clockify Project Started - ${projectId}`);
+
+    const response = this.http
+      .post(`/workspaces/${process.env.CLOCKIFY_WORKSPACE_ID}/time-entries`, {
         projectId,
-      },
-    );
+      })
+      .pipe(catchError(handleAxiosError));
+    console.log(response);
+    return firstValueFrom(response);
   }
 
   // Function to run when timers are stopped

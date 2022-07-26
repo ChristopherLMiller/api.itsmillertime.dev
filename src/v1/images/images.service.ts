@@ -2,7 +2,9 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { firstValueFrom } from 'rxjs';
+import { ImageExif } from 'src/prisma/dto.ts/imageExif.entity';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ReponseData } from 'types';
 
 const ExifImage = require('exif').ExifImage;
 
@@ -13,7 +15,10 @@ export class ImagesService {
     private prisma: PrismaService,
   ) {}
 
-  async getExifData(image: string, cache: boolean = true): Promise<any> {
+  async getExifData(
+    image: string,
+    cache: boolean = true,
+  ): Promise<ReponseData<ImageExif | Prisma.InputJsonObject>> {
     // we take different paths depending on if the user wants cached data or not
     if (cache) {
       // See if the data already exists
@@ -48,6 +53,7 @@ export class ImagesService {
 
     // this is the meta of the image here
     const imageMeta = (await promiseReponse) as Prisma.InputJsonObject;
+    console.log(imageMeta);
 
     // If we are caching the result, lets store that
     if (cache === true) {
